@@ -1,0 +1,11 @@
+(()=>{'use strict';const status=document.querySelector('#status'),enter=document.querySelector('#enter'),retry=document.querySelector('#retry'),frame=document.querySelector('#shop');let busy=false,active='',memory='';
+function key(){try{memory=localStorage.getItem('lige-shop-device-v1')||memory;}catch{}if(!/^[a-f0-9]{64}$/.test(memory)){memory=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');try{localStorage.setItem('lige-shop-device-v1',memory);}catch{}}return memory;}
+frame.addEventListener('load',()=>{if(active)frame.contentWindow.postMessage({type:'shop-device',key:key()},new URL(active).origin);});
+window.addEventListener('message',e=>{if(e.source===frame.contentWindow&&active&&e.origin===new URL(active).origin&&e.data?.type==='shop-forget-device'){memory='';try{localStorage.removeItem('lige-shop-device-v1');}catch{}frame.contentWindow.postMessage({type:'shop-device',key:key()},new URL(active).origin);}});
+async function connect(){if(busy)return;busy=true;retry.hidden=true;try{
+const r=await fetch('target.json?t='+Date.now(),{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error();const config=await r.json();
+if(!config.url)throw Error();const url=new URL(config.url);if(url.protocol!=='https:'||!url.hostname.endsWith('.trycloudflare.com'))throw Error();
+enter.href=url.href;const check=await fetch(url.origin+'/health',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!check.ok||!(await check.json()).ok)throw Error();
+status.textContent='店铺已连接';if(active!==url.href){active=url.href;frame.src=active;}frame.hidden=false;document.querySelector('.card').hidden=true;
+}catch{if(!active){status.textContent='店铺暂时离线或正在恢复连接，请稍后再试。';enter.hidden=true;retry.hidden=false;}}finally{busy=false;}}
+retry.addEventListener('click',connect);connect();setInterval(connect,15000);})();
