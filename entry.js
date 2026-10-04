@@ -8,5 +8,5 @@ const r=await fetch('target.json?t='+Date.now(),{cache:'no-store',signal:AbortSi
 if(!config.url)throw Error();const url=new URL(config.url);if(url.protocol!=='https:'||!url.hostname.endsWith('.trycloudflare.com'))throw Error();
 enter.href=url.href;const check=await fetch(url.origin+'/health',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!check.ok||!(await check.json()).ok)throw Error();
 status.textContent='店铺已连接';if(active!==url.href){active=url.href;frame.src=active;}frame.hidden=false;document.querySelector('.card').hidden=true;
-}catch{if(!active){status.textContent='店铺暂时离线或正在恢复连接，请稍后再试。';enter.hidden=true;retry.hidden=false;}}finally{busy=false;}}
+}catch{status.textContent='店铺暂时离线或正在恢复连接，请稍后再试。';enter.hidden=true;retry.hidden=false;frame.hidden=true;document.querySelector('.card').hidden=false;active='';}finally{busy=false;}}
 retry.addEventListener('click',connect);connect();setInterval(connect,15000);})();
